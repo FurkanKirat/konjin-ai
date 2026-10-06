@@ -23,8 +23,15 @@ Loss on the answer only: for task data (`// out:` marker) and chat data the loss
 
 ## Results
 
-**Boilerplate (held-out exact match):** 118/120 = 98.3%. The test classes use identifiers drawn from a word pool that is disjoint from training, so the model has to copy names rather than recall them.
-Not verified: the generated C# was compared to the reference output as text; it was not compiled.
+**Boilerplate (exact match against the rule-based reference, 60 files per test set, 118/120 = 98.3% overall):**
+
+| Test set | What it tests | constructor | tostring | equals | clone | Total |
+|---|---|---|---|---|---|---|
+| `test_names` | 1-6 fields, identifiers from a word pool that is disjoint from training | 17/18 | 15/15 | 14/14 | 13/13 | **59/60** |
+| `test_long` | 7-8 fields (training had at most 6) | 11/11 | 15/15 | 12/12 | 21/22 | **59/60** |
+
+The two misses are copy errors, not wrong structure: one rare identifier copied with one letter wrong (`mbaqeaaqab` -> `mbaqeaaqb`), and in an 8-field class two field names were merged into one in `Clone`.
+Not verified: the output was compared to the reference as text; it was not compiled.
 
 **Turkish model:** validation loss 0.777 nats/byte after pre-training; 0.605 on replies after chat fine-tuning. Example (temperature 0.6):
 
@@ -118,6 +125,17 @@ Training time on the RTX 4060 Laptop: the 26M model does ~0.1 s/step (20k steps 
 - Boilerplate outputs were checked against a rule-based reference, not compiled.
 - Byte-level modelling is simple but data- and compute-hungry: a byte model sees about a quarter of the text a token model sees for the same context length.
 
-## Credits
+## Data and licences
 
-Turkish Wikipedia and Turkish chat/instruction datasets from Hugging Face (check each dataset's licence before reusing the trained weights).
+The code in this repository is MIT licensed. Training data is **not** included. Model weights are attached to the GitHub Releases:
+the boilerplate model (MIT) and the Turkish chat model (**CC BY-SA 3.0**, because it was trained on Wikipedia text; see the table). Both are provided as-is, for research and education.
+The recipe to reproduce the Turkish model is in `src/datagen/prep_tr.py` and the commands above.
+
+| Data | Used for | Licence (from the dataset card) | Notes |
+|---|---|---|---|
+| Generated C# examples (`gen_boilerplate.py`) | boilerplate model | n/a (rule-generated) | Identifier words were mined from public C# code; only single lower-cased words are used |
+| Turkish Wikipedia (Hugging Face) | Turkish pre-training | CC BY-SA 3.0 and GFDL | Attribution required; share-alike for derivatives |
+| [NovusResearch/turkish_instructions](https://huggingface.co/datasets/NovusResearch/turkish_instructions) | Turkish chat fine-tuning | Apache-2.0 | "Processed version" of [merve/turkish_instructions](https://huggingface.co/datasets/merve/turkish_instructions) (Apache-2.0); how the original text was produced is not documented on the cards |
+| [SoAp9035/everyday-conversations-tur](https://huggingface.co/datasets/SoAp9035/everyday-conversations-tur) | Turkish chat fine-tuning | Apache-2.0 | Inspired by [HuggingFaceTB/everyday-conversations-llama3.1-2k](https://huggingface.co/datasets/HuggingFaceTB/everyday-conversations-llama3.1-2k) |
+
+Not affiliated with Wikipedia, Hugging Face or the dataset authors.
