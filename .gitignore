@@ -1,0 +1,7 @@
+models/
+data/
+results/
+__pycache__/
+*.pt
+*.tmp
+.idea/
