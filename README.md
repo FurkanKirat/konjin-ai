@@ -57,12 +57,45 @@ models/       checkpoints                          (not in the repo)
 
 ## Usage
 
-Boilerplate data and model (adjust paths and hyper-parameters to your setup):
+Boilerplate model. It was trained in three stages, each continuing from the previous checkpoint on a freshly generated
+150k-example dataset (`bp1` used lr 6e-4 for 12k steps, `bp2` and `bp3` lr 3e-4 for 20k steps):
 
 ```
-python src/datagen/gen_boilerplate.py --out data/bp --train 150000 --test 300 --words-from <folder with .cs files> --pseudo 0.1
-python src/model/minigpt.py --out models/bp.pt --data data/bp/train --ext .cs --embd 512 --layers 8 --heads 8 --block 1024 --bs 8 --steps 20000 --out-only --fim 0
-python src/eval/bp_demo.py --load models/bp.pt
+python src/datagen/gen_boilerplate.py --out data/bp3 --train 150000 --test 300 --words-from <folder with .cs files> --pseudo 0.1
+python src/model/minigpt.py --init models/bp2.pt --out models/bp3.pt --data data/bp3/train --ext .cs --lr 3e-4 --bs 8 --steps 20000 --out-only --fim 0
+python src/eval/bp_demo.py --load models/bp3.pt --class Item --style prop --fields "string Name, int Id" --task all
+```
+
+(The first stage is the same command without `--init`, with `--embd 512 --layers 8 --heads 8 --block 1024`.) Example output:
+
+```
+public Item(string name, int id)
+{
+    Name = name;
+    Id = id;
+}
+
+public override string ToString()
+{
+    return $"Item(Name={Name}, Id={Id})";
+}
+
+public override bool Equals(object obj) => obj is Item other && Equals(other);
+
+public bool Equals(Item other)
+{
+    return other != null && Name == other.Name && Id == other.Id;
+}
+
+public override int GetHashCode()
+{
+    return HashCode.Combine(Name, Id);
+}
+
+public Item Clone()
+{
+    return new Item(Name, Id);
+}
 ```
 
 Turkish model:
